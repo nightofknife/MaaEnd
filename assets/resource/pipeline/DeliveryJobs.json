@@ -31,14 +31,14 @@
         "max_hit": 1,
         "next": [
             "[JumpBack]EnterDeliveryJob",
-            "[JumpBack]CargoHasOffer",
-            "[JumpBack]EnterCargo",
-            "CargoNotReady", // 在货物全部都没有准备好的时候退出循环
+            "[JumpBack]EnterOriginiumScienceParkCargo",
+            "[JumpBack]EnterOriginLodespringCargo",
+            "[JumpBack]EnterPowerPlateauCargo",
+            "ValleyIVCargoNotReady",
             "CheckValleyIVDepotLocked",
             "[JumpBack]EnterValleyIVDepot",
             "[JumpBack]GoToValleyIV",
             "[JumpBack]RegionalDevelopmentButton"
-
         ]
     },
     "DeliveryJobsWuling": {
@@ -46,9 +46,8 @@
         "max_hit": 1,
         "next": [
             "[JumpBack]EnterDeliveryJob",
-            "[JumpBack]CargoHasOffer",
-            "[JumpBack]EnterCargo",
-            "CargoNotReady",
+            "[JumpBack]EnterWulingCityCargo",
+            "WulingCargoNotReady",
             "CheckWulingDepotLocked",
             "[JumpBack]EnterWulingDepot",
             "[JumpBack]GoToWuling",
@@ -57,7 +56,11 @@
     },
     "DeliveryJobsFinished": {
         "doc": "运送委托完成",
-        "action": "ClickKey",
-        "key": 27
+        "recognition": "And",
+        "all_of": [
+            "BackButton",
+            "CheckCurrentArea"
+        ],
+        "action": "Click"
     }
 }

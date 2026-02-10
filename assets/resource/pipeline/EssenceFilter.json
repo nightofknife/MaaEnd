@@ -69,10 +69,46 @@
                 }
             }
         },
-        "next": ["EssenceRowDetect"],
+        "next": [
+            "OCREssenceInventoryNumber",
+            "EssenceRowDetect",
+            "EssenceDetectFinal",
+            "EssenceFilterFinish"
+        ],
         "focus": {
             "Node.Action.Succeeded": "初始化完成"
         }
+    },
+
+    "OCREssenceInventoryNumber": {
+        "doc": "OCR 识别背包中的基质数量",
+        "rate_limit": 300,
+        "timeout": 1500,
+        "recognition": {
+            "type": "OCR",
+            "param": {
+                "roi": [
+                    93,
+                    48,
+                    74,
+                    22
+                ],
+                "expected": ["\\d+(\\/\\d+)?"],
+                "threshold": 0.3,
+                "only_rec": true
+            }
+        },
+        "action": {
+            "type": "Custom",
+            "param": {
+                "custom_action": "OCREssenceInventoryNumberAction"
+            }
+        },
+        "next": [
+            "EssenceRowDetect",
+            "EssenceDetectFinal",
+            "EssenceFilterFinish"
+        ]
     },
 
     "EssenceRowDetect": {
@@ -81,7 +117,8 @@
             "type": "TemplateMatch",
             "param": {
                 "template": "EssenceFilter/EssenceGeneral.png",
-                "threshold": 0.55,
+                "threshold": 0.45,
+                // "threshold": 0.55,
                 "roi": [
                     18,
                     72,
@@ -97,7 +134,37 @@
                 "custom_action": "EssenceFilterRowCollectAction"
             }
         },
-        "next": ["EssenceFilterRowNextItem"]
+        "next": [
+            "EssenceFilterRowNextItem",
+            "EssenceDetectFinal"
+        ]
+    },
+    "EssenceDetectFinal": {
+        "doc": "尾扫：扩大 ROI 捕获底部剩余行",
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "template": "EssenceFilter/EssenceGeneral.png",
+                "threshold": 0.45,
+                // "threshold": 0.55,
+                "roi": [
+                    18,
+                    72,
+                    956,
+                    570
+                ], // 高度放大，覆盖底部区域
+                "method": 5
+            }
+        },
+        "action": {
+            "type": "Custom",
+            "param": {
+                "custom_action": "EssenceFilterRowCollectAction"
+            }
+        },
+        "next": [
+            "EssenceFilterRowNextItem"
+        ]
     },
 
     "EssenceFilterCheckItemSlot1": {
@@ -313,7 +380,10 @@
             }
         },
         "post_delay": 200,
-        "next": ["EssenceRowDetect"]
+        "next": [
+            "EssenceRowDetect",
+            "EssenceDetectFinal"
+        ]
     },
     "EssenceFilterSwipeNext": {
         "doc": "后续滑动",
@@ -333,7 +403,10 @@
             }
         },
         "post_delay": 200,
-        "next": ["EssenceRowDetect"]
+        "next": [
+            "EssenceRowDetect",
+            "EssenceDetectFinal"
+        ]
     },
 
     "EssenceFilterFinish": {

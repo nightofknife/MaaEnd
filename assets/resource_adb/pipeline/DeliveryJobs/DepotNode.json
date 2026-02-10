@@ -1,0 +1,74 @@
+{
+    "CheckOriginiumSciencePark": {
+        "roi": [
+            67,
+            264,
+            1006,
+            26
+        ]
+    },
+    "CheckOriginLodespring": {
+        "roi": [
+            67,
+            264,
+            1006,
+            26
+        ]
+    },
+    "CheckPowerPlateau": {
+        "roi": [
+            67,
+            264,
+            1006,
+            26
+        ]
+    },
+    "CheckWulingCity": {
+        "roi": [
+            67,
+            264,
+            1006,
+            26
+        ]
+    },
+    "CheckOriginiumScienceParkCargo": {
+        "roi_offset": [
+            -17,
+            325,
+            188,
+            26
+        ]
+    },
+    "CheckOriginLodespringCargo": {
+        "roi_offset": [
+            -17,
+            325,
+            188,
+            26
+        ]
+    },
+    "CheckPowerPlateauCargo": {
+        "roi_offset": [
+            -17,
+            325,
+            188,
+            26
+        ]
+    },
+    "CheckWulingCityCargo": {
+        "roi_offset": [
+            -17,
+            325,
+            188,
+            26
+        ]
+    },
+    "CheckDepotNode": {
+        "roi": [
+            99,
+            167,
+            213,
+            29
+        ]
+    }
+}

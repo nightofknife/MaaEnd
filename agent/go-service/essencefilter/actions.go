@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 
 	maa "github.com/MaaXYZ/maa-framework-go/v4"
@@ -137,6 +139,7 @@ func (a *EssenceFilterInitAction) Run(ctx *maa.Context, arg *maa.CustomActionArg
 	currentRow = 1
 	maxItemsPerRow = 9
 	firstRowSwipeDone = false
+	finalLargeScanUsed = false
 	statsLogged = false
 	log.Info().Int("combinations", len(targetSkillCombinations)).Msg("<EssenceFilter> Step7 ok")
 	log.Info().Msg("<EssenceFilter> ========== Init Done ==========")
@@ -192,6 +195,48 @@ func (a *EssenceFilterInitAction) Run(ctx *maa.Context, arg *maa.CustomActionArg
 	}
 	LogMXUHTML(ctx, skillBuilder.String())
 
+	return true
+}
+
+type OCREssenceInventoryNumberAction struct{}
+
+func (a *OCREssenceInventoryNumberAction) Run(ctx *maa.Context, arg *maa.CustomActionArg) bool {
+	const maxSinglePage = 45 // 单页可见格子上限：9列×5行
+
+	if arg.RecognitionDetail == nil || arg.RecognitionDetail.Results == nil || len(arg.RecognitionDetail.Results.Filtered) == 0 {
+		log.Error().Msg("<EssenceFilter> CheckTotal: no OCR detail")
+		return false
+	}
+	ocr, _ := arg.RecognitionDetail.Results.Filtered[0].AsOCR()
+	text := strings.TrimSpace(ocr.Text)
+	if text == "" {
+		log.Error().Msg("<EssenceFilter> CheckTotal: empty text")
+		return false
+	}
+
+	// 提取数字：若是 “cur/total” 取 cur，否则取第一个数字
+	re := regexp.MustCompile(`\d+`)
+	nums := re.FindAllString(text, -1)
+	if len(nums) == 0 {
+		log.Error().Str("text", text).Msg("<EssenceFilter> CheckTotal: no number found")
+		return false
+	}
+	nStr := nums[0] // 优先取 cur；若只有一个数字就取它
+	n, err := strconv.Atoi(nStr)
+	if err != nil {
+		log.Error().Err(err).Str("text", text).Msg("<EssenceFilter> CheckTotal: parse fail")
+		return false
+	}
+
+	log.Info().Int("count", n).Int("max_single_page", maxSinglePage).Str("raw", text).
+		Msg("<EssenceFilter> CheckTotal: parsed")
+	LogMXUSimpleHTML(ctx, fmt.Sprintf("库存中共 <span style=\"color: #ff7000; font-weight: 900;\">%d</span> 个基质", n))
+
+	if n <= maxSinglePage {
+		ctx.OverrideNext(arg.CurrentTaskName, []maa.NodeNextItem{
+			{Name: "EssenceDetectFinal"},
+		})
+	}
 	return true
 }
 
@@ -295,7 +340,17 @@ func (a *EssenceFilterRowCollectAction) Run(ctx *maa.Context, arg *maa.CustomAct
 		}
 		b := tm.Box
 		boxArr := [4]int{b.X(), b.Y(), b.Width(), b.Height()}
-		roi := maa.Rect{boxArr[0], boxArr[1] + 90, boxArr[2], boxArr[3] - 90} //bottom of each box
+
+		colorMatchROIX := boxArr[0]
+		colorMatchROIY := boxArr[1] + 90
+		colorMatchROIW := boxArr[2]
+		colorMatchROIH := boxArr[3] - 90
+		if colorMatchROIW <= 0 || colorMatchROIH <= 0 {
+			log.Error().Ints("box", boxArr[:]).Msg("<EssenceFilter> RowCollect: invalid ROI size, skip")
+			continue // skip invalid ROIs
+		}
+
+		roi := maa.Rect{colorMatchROIX, colorMatchROIY, colorMatchROIW, colorMatchROIH}
 
 		ColorMatchOverrideParam := map[string]any{
 			"EssenceColorMatch": map[string]any{
@@ -313,8 +368,31 @@ func (a *EssenceFilterRowCollectAction) Run(ctx *maa.Context, arg *maa.CustomAct
 			rowBoxes = append(rowBoxes, boxArr)
 		}
 	}
+	// sort rowboxes by Y coordinate then X coordinate
+	sort.Slice(rowBoxes, func(i, j int) bool {
+		if rowBoxes[i][1] == rowBoxes[j][1] {
+			return rowBoxes[i][0] < rowBoxes[j][0]
+		}
+		return rowBoxes[i][1] < rowBoxes[j][1]
+	})
 
-	if len(rowBoxes) > maxItemsPerRow {
+	// LogMXUSimpleHTML(ctx, "len(results): "+strconv.Itoa(len(results))+", valid boxes after color match: "+strconv.Itoa(len(rowBoxes)))
+	log.Info().Int("len_results", len(results)).Int("valid_boxes", len(rowBoxes)).Msg("<EssenceFilter> RowCollect: color match done")
+	// 如果本行没有任何符合条件的box，且还没有使用过最终大范围扫描，则触发最终大范围扫描；否则直接结束当前行的处理
+	isFallbackScan := arg.CurrentTaskName == "EssenceDetectFinal"
+
+	if isFallbackScan && !finalLargeScanUsed {
+		finalLargeScanUsed = true
+		ctx.OverrideNext(arg.CurrentTaskName, []maa.NodeNextItem{
+			{Name: "EssenceDetectFinal"},
+		})
+		LogMXUSimpleHTML(ctx, fmt.Sprintf("尾扫完成，收集所有剩余基质格子"))
+		log.Info().Msg("<EssenceFilter> RowCollect: trigger final large scan")
+		return true
+	}
+
+	// 在非尾扫的情况下，如果符合条件的box数量超过单行最大可处理数量，直接结束当前行的处理，避免误操作；如果是尾扫，则不论数量多少都继续处理
+	if (len(rowBoxes) > maxItemsPerRow) && !isFallbackScan {
 		log.Error().Int("count", len(rowBoxes)).Msg("<EssenceFilter> RowCollect: boxes > maxItemsPerRow, abort")
 		ctx.OverrideNext(arg.CurrentTaskName, []maa.NodeNextItem{
 			{Name: "EssenceFilterFinish"},
@@ -343,7 +421,7 @@ func (a *EssenceFilterRowNextItemAction) Run(ctx *maa.Context, arg *maa.CustomAc
 	// ensure we exit detail before next
 
 	if rowIndex >= len(rowBoxes) {
-		if len(rowBoxes) == maxItemsPerRow {
+		if (len(rowBoxes) == maxItemsPerRow) && !finalLargeScanUsed {
 			var nextSwipe string
 			if !firstRowSwipeDone {
 				nextSwipe = "EssenceFilterSwipeFirst"
@@ -434,7 +512,7 @@ func (a *EssenceFilterFinishAction) Run(ctx *maa.Context, arg *maa.CustomActionA
 	log.Info().Msg("<EssenceFilter> ========== Finish ==========")
 	log.Info().Int("matched_total", matchedCount).Msg("<EssenceFilter> locked items")
 
-	LogMXUSimpleHTML(ctx, fmt.Sprintf("筛选完成！共历遍物品：%d，确认锁定物品：%d", visitedCount, matchedCount))
+	LogMXUSimpleHTMLWithColor(ctx, fmt.Sprintf("筛选完成！共历遍物品：%d，确认锁定物品：%d", visitedCount, matchedCount), "#11cf00")
 
 	targetSkillCombinations = nil
 	matchedCount = 0
@@ -445,6 +523,11 @@ func (a *EssenceFilterFinishAction) Run(ctx *maa.Context, arg *maa.CustomActionA
 	statsLogged = false
 	currentCol = 1
 	currentRow = 1
+	finalLargeScanUsed = false
+	firstRowSwipeDone = false
+	rowBoxes = nil
+	rowIndex = 0
+
 	return true
 }
 
