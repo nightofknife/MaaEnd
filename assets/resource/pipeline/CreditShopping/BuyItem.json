@@ -1,23 +1,36 @@
 {
     // 在商店中购买物品的节点
-    "CreditShoppingBuyFistItem": {
+    "CreditShoppingBuyFirstItem": {
         "doc": "点击购买商品",
         "recognition": "DirectHit",
         "action": "Click",
         "target": "CreditShoppingBuyFirst",
         "next": [
             "CreditShoppingBuyFailed",
-            "CreditShoppingBuyConfirm"
+            "CreditShoppingBuyConfirm",
+            "CreditShoppingBuyFirstItem"
         ]
     },
-    "CreditShoppingBuyNormalItem": {
-        "doc": "点击购买商品",
+    "CreditShoppingBuyNormalItemNoDiscount": {
+        "doc": "点击购买商品(无折扣)",
         "recognition": "DirectHit",
         "action": "Click",
-        "target": "CreditShoppingBuyNormal",
+        "target": "CreditShoppingBuyNormalNoDiscount",
         "next": [
             "CreditShoppingBuyFailed",
-            "CreditShoppingBuyConfirm"
+            "CreditShoppingBuyConfirm",
+            "CreditShoppingBuyNormalItemNoDiscount"
+        ]
+    },
+    "CreditShoppingBuyNormalItemWithDiscount": {
+        "doc": "点击购买商品(有折扣)",
+        "recognition": "DirectHit",
+        "action": "Click",
+        "target": "CreditShoppingBuyNormalWithDiscount",
+        "next": [
+            "CreditShoppingBuyFailed",
+            "CreditShoppingBuyConfirm",
+            "CreditShoppingBuyNormalItemWithDiscount"
         ]
     },
     "CreditShoppingBuyBlacklistItem": {
@@ -27,7 +40,8 @@
         "target": "CreditShoppingBuyBlacklist",
         "next": [
             "CreditShoppingBuyFailed",
-            "CreditShoppingBuyConfirm"
+            "CreditShoppingBuyConfirm",
+            "CreditShoppingBuyBlacklistItem"
         ]
     },
     "CreditShoppingBuyFailed": {
@@ -44,10 +58,10 @@
             104
         ],
         "roi": [
-            573,
-            498,
-            132,
-            43
+            571,
+            497,
+            133,
+            95
         ],
         "action": "DoNothing",
         "next": [
@@ -57,30 +71,37 @@
     "CreditShoppingCloseDialog": {
         "doc": "关闭对话框",
         "recognition": "TemplateMatch",
-        "template": "CreditShopping/CloseBuyItemDialog.png",
+        "template": "Common/Button/CloseButtonType2.png",
         "roi": [
-            1071,
-            129,
-            23,
-            23
+            1066,
+            63,
+            148,
+            97
         ],
-        "action": "Click"
+        "action": "Click",
+        "next": [
+            "CreditShoppingCloseDialog"
+        ]
     },
     "CreditShoppingBuyConfirm": {
         "doc": "购买确认",
         "recognition": "TemplateMatch",
-        "template": "CreditShopping/BuyConfirm.png",
+        "template": [
+            "Common/Button/YellowConfirmButtonType1.png",
+            "Common/Button/YellowConfirmButtonType1Hover.png"
+        ],
         "roi": [
-            1060,
-            569,
-            21,
-            21
+            1050,
+            559,
+            168,
+            113
         ],
         "threshold": 0.8,
         "action": "Click",
         "next": [
             "CreditShoppingClaimConfirm",
-            "CreditShoppingBuyFailed"
+            "CreditShoppingBuyFailed",
+            "CreditShoppingBuyConfirm"
         ]
     }
 }

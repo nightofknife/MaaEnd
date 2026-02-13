@@ -1,0 +1,20 @@
+{
+    "CreditShoppingMain": {
+        "next": [
+            "CreditShoppingShopping",
+            "CreditShoppingCheckShopPage",
+            "EntryCreeditShop",
+            "CreditShoppingCheckMainUI"
+            //"[JumpBack]SceneTestEnterWorld"
+        ]
+    },
+    "CreditShoppingCheckMainUI": {
+        "action": "Click"
+    },
+    "EntryCreeditShop": {
+        "action": "Click"
+    },
+    "CreditShoppingCheckShopPage": {
+        "action": "Click"
+    }
+}

@@ -1,17 +1,18 @@
 {
     "CreditShoppingClaimCredit": {
         "doc": "领取信用点",
-        "recognition": "TemplateMatch",
-        "template": "CreditShopping/ClaimCredit.png",
+        "recognition": "OCR",
+        "expected": "收取信用",
         "roi": [
-            198,
-            664,
-            22,
-            11
+            26,
+            583,
+            254,
+            137
         ],
         "action": "Click",
         "next": [
-            "CreditShoppingClaimConfirm"
+            "CreditShoppingClaimConfirm",
+            "CreditShoppingClaimCredit"
         ]
     },
     "CreditShoppingNoCreditClaim": {
@@ -32,16 +33,20 @@
     "CreditShoppingClaimConfirm": {
         "doc": "获取信用点或物品后的通用确认节点",
         "recognition": "TemplateMatch",
-        "template": "CreditShopping/ClaimConfirm.png",
+        "template": [
+            "Common/Button/CloseRewardButton.png",
+            "Common/Button/CloseRewardButtonHover.png"
+        ],
         "roi": [
-            623,
-            648,
-            34,
-            32
+            560,
+            586,
+            161,
+            134
         ],
         "action": "Click",
         "next": [
-            "CreditShoppingShopping"
+            "CreditShoppingShopping",
+            "CreditShoppingClaimConfirm"
         ]
     }
 }

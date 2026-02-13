@@ -1,11 +1,11 @@
 {
-    "AlreadyInEmail": {
+    "DailyEmailAlreadyInEmail": {
         "focus": {
             "Node.Recognition.Succeeded": "已进入邮件界面"
         },
         "next": [
-            "ExistTSA",
-            "ReceiveEmail"
+            "DailyEmailExistTSA",
+            "DailyEmailReceiveEmail"
         ],
         "recognition": {
             "param": {
@@ -23,54 +23,7 @@
             "type": "OCR"
         }
     },
-    "CEOpenEmailInMain": {
-        "action": {
-            "param": {
-                "key": 18
-            },
-            "type": "KeyDown"
-        },
-        "focus": {
-            "Node.Recognition.Succeeded": "进入邮件界面"
-        },
-        "next": [
-            "CEOpenEmailInMainClick"
-        ],
-        "recognition": {
-            "param": {
-                "roi": [
-                    5,
-                    4,
-                    483,
-                    106
-                ],
-                "template": [
-                    "CheckEmail/email.png"
-                ]
-            },
-            "type": "TemplateMatch"
-        }
-    },
-    "CEOpenEmailInMainClick": {
-        "action": {
-            "param": {
-                "target": "CEOpenEmailInMain"
-            },
-            "type": "Click"
-        },
-        "next": [
-            "CEOpenEmailInMainDone"
-        ]
-    },
-    "CEOpenEmailInMainDone": {
-        "action": {
-            "param": {
-                "key": 18
-            },
-            "type": "KeyUp"
-        }
-    },
-    "CheckEmailEnd": {
+    "DailyEmailCheckEmailEnd": {
         "action": {
             "param": {},
             "type": "Click"
@@ -81,7 +34,7 @@
         "recognition": {
             "param": {
                 "template": [
-                    "CloseInfo/CloseButton.png"
+                    "Common/BackButton.png"
                 ]
             },
             "type": "TemplateMatch"
@@ -89,16 +42,91 @@
         "repeat": 2,
         "repeat_wait_freezes": 1000
     },
-    "CheckEmailStart": {
+    "DailyEmailStart": {
+        "doc": "邮件奖励流程入口",
         "next": [
-            "AlreadyInEmail",
-            "[JumpBack]CEOpenEmailInMain",
-            "NoEmail"
+            "DailyEmailWorldEnterMenuEmail",
+            "[JumpBack]SceneAnyEnterWorld"
         ],
         "post_delay": 0,
         "pre_delay": 0
     },
-    "ConfirmEmail": {
+    "DailyEmailWorldEnterMenuEmail": {
+        "doc": "从大世界进入邮箱界面",
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "roi": [
+                    -200,
+                    0,
+                    200,
+                    200
+                ],
+                "template": [
+                    "SceneManager/WorldMenu.png"
+                ],
+                "green_mask": true
+            }
+        },
+        "post_delay": 0,
+        "pre_delay": 0,
+        "next": [
+            "DailyEmailHasUnreadMessage",
+            "DailyEmailNoUnreadMessage"
+        ]
+    },
+    "DailyEmailHasUnreadMessage": {
+        "doc": "大世界有未读邮件,尝试打开邮件",
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "roi": [
+                    0,
+                    0,
+                    350,
+                    80
+                ],
+                "template": [
+                    "CheckEmail/email.png"
+                ]
+            }
+        },
+        "action": {
+            "type": "ClickKey",
+            "param": {
+                "key": 75 // K
+            }
+        },
+        "focus": {
+            "Node.Action.Succeeded": "尝试打开邮件"
+        },
+        "post_wait_freezes": 400,
+        "next": [
+            "DailyEmailAlreadyInEmail"
+        ]
+    },
+    "DailyEmailNoUnreadMessage": {
+        "doc": "大世界没有未读邮件，不进行操作",
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "roi": [
+                    0,
+                    0,
+                    350,
+                    80
+                ],
+                "template": [
+                    "CheckEmail/email.png"
+                ]
+            }
+        },
+        "inverse": true,
+        "focus": {
+            "Node.Recognition.Succeeded": "没有未读邮件"
+        }
+    },
+    "DailyEmailConfirmEmail": {
         "action": {
             "param": {},
             "type": "Click"
@@ -107,7 +135,7 @@
             "Node.Recognition.Succeeded": "获取邮件奖励"
         },
         "next": [
-            "CheckEmailEnd"
+            "DailyEmailCheckEmailEnd"
         ],
         "pre_wait_freezes": 200,
         "recognition": {
@@ -125,13 +153,13 @@
             "type": "OCR"
         }
     },
-    "ConfirmTSA": {
+    "DailyEmailConfirmTSA": {
         "action": {
             "param": {},
             "type": "Click"
         },
         "next": [
-            "ReceiveEmail"
+            "DailyEmailReceiveEmail"
         ],
         "pre_wait_freezes": 200,
         "recognition": {
@@ -149,7 +177,7 @@
             "type": "OCR"
         }
     },
-    "ExistTSA": {
+    "DailyEmailExistTSA": {
         "action": {
             "param": {},
             "type": "Click"
@@ -158,7 +186,7 @@
             "Node.Recognition.Succeeded": "收取暂存区物资"
         },
         "next": [
-            "ReceiveTSA"
+            "DailyEmailReceiveTSA"
         ],
         "recognition": {
             "param": {
@@ -169,16 +197,12 @@
             "type": "TemplateMatch"
         }
     },
-    "NoEmail": {
-        "post_delay": 0,
-        "pre_delay": 0
-    },
-    "NoEmailRewards": {
+    "DailyEmailNoEmailRewards": {
         "focus": {
             "Node.Recognition.Succeeded": "暂无邮件奖励"
         },
         "next": [
-            "CheckEmailEnd"
+            "DailyEmailCheckEmailEnd"
         ],
         "recognition": {
             "param": {
@@ -195,14 +219,14 @@
             "type": "OCR"
         }
     },
-    "ReceiveEmail": {
+    "DailyEmailReceiveEmail": {
         "action": {
             "param": {},
             "type": "Click"
         },
         "next": [
-            "NoEmailRewards",
-            "ConfirmEmail"
+            "DailyEmailNoEmailRewards",
+            "DailyEmailConfirmEmail"
         ],
         "recognition": {
             "param": {
@@ -219,13 +243,13 @@
             "type": "OCR"
         }
     },
-    "ReceiveTSA": {
+    "DailyEmailReceiveTSA": {
         "action": {
             "param": {},
             "type": "Click"
         },
         "next": [
-            "ConfirmTSA"
+            "DailyEmailConfirmTSA"
         ],
         "pre_wait_freezes": 200,
         "recognition": {

@@ -1,27 +1,74 @@
 {
     "FriendVisitMain": {
+        "doc": "入口：优先识别当前界面，再决定按 Esc 后的行为（好友船 Esc→好友列表，己方世界 Esc→暂停菜单）",
         "next": [
+            "OnFriendList",
             "OpenFriendList",
-            "OpenMenu"
+            "OpenFriendListFromFriendShip",
+            "EnterPauseMenu",
+            "[JumpBack]SceneAnyEnterWorld"
         ]
     },
-    "OpenMenu": {
-        "max_hit": 5,
+    "OpenFriendListFromFriendShip": {
+        "doc": "在好友船上时按 Esc 会打开好友列表（而非暂停菜单），按下 Esc 后进入好友列表",
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "template": "VisitFriends/ArriveShip.png",
+                "roi": [
+                    1166,
+                    0,
+                    114,
+                    76
+                ],
+                "threshold": 0.8
+            }
+        },
         "action": {
             "type": "ClickKey",
             "param": {
                 "key": 27
             }
         },
+        "post_wait_freezes": 2,
         "next": [
-            "FriendVisitMain"
+            "OnFriendList"
+        ]
+    },
+    "EnterPauseMenu": {
+        "doc": "在己方世界按下 Esc 唤出暂停界面，等待「好友」按钮（仅在非好友船时有效）",
+        "max_hit": 1,
+        "recognition": {
+            "type": "And",
+            "param": {
+                "all_of": [
+                    "InWorld"
+                ]
+            }
+        },
+        "action": {
+            "type": "ClickKey",
+            "param": {
+                "key": 27
+            }
+        },
+        "post_delay": 400,
+        "next": [
+            "OpenFriendList"
         ]
     },
     "OpenFriendList": {
+        "doc": "发现「好友」按钮，按下",
         "recognition": {
             "type": "TemplateMatch",
             "param": {
                 "template": "VisitFriends/FriendList.png",
+                "roi": [
+                    898,
+                    62,
+                    382,
+                    612
+                ],
                 "threshold": 0.8
             }
         },
@@ -34,10 +81,17 @@
         ]
     },
     "OnFriendList": {
+        "doc": "识别是否位于好友列表界面",
         "recognition": {
             "type": "TemplateMatch",
             "param": {
                 "template": "VisitFriends/OnFriendList.png",
+                "roi": [
+                    12,
+                    44,
+                    80,
+                    64
+                ],
                 "threshold": 0.8
             }
         },
@@ -49,14 +103,15 @@
         ]
     },
     "PriorStealGate": {
+        "doc": "偷菜模式：助力生产 - 剩余次数大于0",
         "recognition": {
             "type": "OCR",
             "param": {
                 "roi": [
                     1221,
                     71,
-                    10,
-                    16
+                    14,
+                    18
                 ],
                 "expected": [
                     "[1-5]"
@@ -74,6 +129,7 @@
         ]
     },
     "PriorStealGateClueCheck": {
+        "doc": "偷菜模式：线索交流 - 剩余次数大于0",
         "recognition": {
             "type": "OCR",
             "param": {
@@ -98,14 +154,15 @@
         ]
     },
     "ProductionAssistOCR": {
+        "doc": "助力生产 - 剩余次数大于0",
         "recognition": {
             "type": "OCR",
             "param": {
                 "roi": [
                     1221,
                     71,
-                    10,
-                    16
+                    14,
+                    18
                 ],
                 "expected": [
                     "[1-5]"
@@ -122,6 +179,7 @@
         ]
     },
     "ProductionAssist": {
+        "doc": "开始助力生产",
         "recognition": "DirectHit",
         "next": [
             "ProductionAssistCheckPriorSteal",
@@ -132,6 +190,7 @@
         ]
     },
     "ProductionAssistCheckPriorSteal": {
+        "doc": "偷菜模式：找到可以线索交流也能助力生产的好友舰船",
         "recognition": {
             "type": "TemplateMatch",
             "param": {
@@ -149,6 +208,7 @@
         ]
     },
     "ProductionAssistCheck": {
+        "doc": "找到能助力生产的好友",
         "recognition": {
             "type": "TemplateMatch",
             "param": {
@@ -172,10 +232,17 @@
         ]
     },
     "GrowthChamberCheck": {
+        "doc": "偷菜模式：有菜可偷",
         "recognition": {
             "type": "TemplateMatch",
             "param": {
                 "template": "VisitFriends/GrowthChamberOpen.png",
+                "roi": [
+                    821,
+                    382,
+                    105,
+                    42
+                ],
                 "threshold": 0.95
             }
         },
@@ -189,6 +256,7 @@
         ]
     },
     "SkipConfirmBackToFriendList": {
+        "doc": "不点确认，按 Esc 返回好友列表",
         "recognition": {
             "type": "TemplateMatch",
             "param": {
@@ -207,6 +275,7 @@
         ]
     },
     "ProductionAssistSwipe": {
+        "doc": "好友界面向下滑找更多好友",
         "recognition": "DirectHit",
         "max_hit": 12,
         "action": {
@@ -228,6 +297,7 @@
         ]
     },
     "VisitorTerminalSwipeFacilityList": {
+        "doc": "访客终端界面为了露出培养仓助力按钮而向左划。post_wait_freezes 用于等待滑动动画结束、界面回位后再识别下一节点，避免动画未结束时误判",
         "recognition": "DirectHit",
         "max_hit": 12,
         "action": {
@@ -244,12 +314,59 @@
                 "end_hold": 200
             }
         },
+        "post_wait_freezes": 500,
         "next": [
             "VisitorTerminalMeetingRoomCheck",
+            "VisitorTerminalGrowthChamberIcon",
+            "VisitorTerminalSwipeForGrowthChamber",
+            "VisitorTerminalAssistGrowthChamber"
+        ]
+    },
+    "VisitorTerminalGrowthChamberIcon": {
+        "doc": "定位培养仓图标（24×24），供后续节点基于其位置用 roi 搜索助力按钮",
+        "recognition": {
+            "type": "TemplateMatch",
+            "param": {
+                "template": "VisitFriends/GrowthChamberOpen.png",
+                "threshold": 0.8
+            }
+        },
+        "action": {
+            "type": "DoNothing",
+            "param": {}
+        },
+        "next": [
+            "VisitorTerminalAssistGrowthChamber"
+        ]
+    },
+    "VisitorTerminalSwipeForGrowthChamber": {
+        "doc": "未找到培养仓图标时向左划一次再重试，避免用无效 roi 进 AssistGrowthChamber。post_wait_freezes 用于等待滑动动画结束、界面回位后再识别下一节点，避免动画未结束时误判",
+        "recognition": "DirectHit",
+        "max_hit": 11,
+        "action": {
+            "type": "Swipe",
+            "param": {
+                "begin": [
+                    1000,
+                    550
+                ],
+                "end": [
+                    550,
+                    550
+                ],
+                "end_hold": 200
+            }
+        },
+        "post_wait_freezes": 500,
+        "next": [
+            "VisitorTerminalMeetingRoomCheck",
+            "VisitorTerminalGrowthChamberIcon",
+            "VisitorTerminalSwipeForGrowthChamber",
             "VisitorTerminalAssistGrowthChamber"
         ]
     },
     "VisitorTerminalMeetingRoomCheck": {
+        "doc": "还能看到会客室按钮，继续向左划",
         "recognition": {
             "type": "TemplateMatch",
             "param": {
@@ -266,10 +383,17 @@
         ]
     },
     "ConfirmVisitToAssist": {
+        "doc": "确定访问",
         "recognition": {
             "type": "TemplateMatch",
             "param": {
                 "template": "VisitFriends/Confirm.png",
+                "roi": [
+                    795,
+                    426,
+                    76,
+                    72
+                ],
                 "threshold": 0.8
             }
         },
@@ -282,10 +406,17 @@
         ]
     },
     "OnAssist": {
+        "doc": "正在好友的船上，按 Y 打开访客终端",
         "recognition": {
             "type": "TemplateMatch",
             "param": {
                 "template": "VisitFriends/ArriveShip.png",
+                "roi": [
+                    1166,
+                    0,
+                    114,
+                    76
+                ],
                 "threshold": 0.8
             }
         },
@@ -301,10 +432,17 @@
         ]
     },
     "WaitOpenTerminalAssistStealVeg": {
+        "doc": "偷菜模式：在能助力培养仓的好友船上的访客终端界面",
         "recognition": {
             "type": "TemplateMatch",
             "param": {
                 "template": "VisitFriends/TerminalIsOpen.png",
+                "roi": [
+                    116,
+                    218,
+                    191,
+                    294
+                ],
                 "threshold": 0.8
             }
         },
@@ -314,10 +452,17 @@
         ]
     },
     "WaitOpenTerminalAssist": {
+        "doc": "在能助力的好友船上的访客终端界面",
         "recognition": {
             "type": "TemplateMatch",
             "param": {
                 "template": "VisitFriends/TerminalIsOpen.png",
+                "roi": [
+                    116,
+                    218,
+                    191,
+                    294
+                ],
                 "threshold": 0.8
             }
         },
@@ -327,10 +472,17 @@
         ]
     },
     "VisitorTerminalClueExchangeFirst": {
+        "doc": "访客终端界面，先点点线索交流",
         "recognition": {
             "type": "TemplateMatch",
             "param": {
                 "template": "VisitFriends/ClueExchange.png",
+                "roi": [
+                    450,
+                    542,
+                    702,
+                    96
+                ],
                 "threshold": 0.8
             }
         },
@@ -344,13 +496,19 @@
         ]
     },
     "VisitorTerminalAssistGrowthChamber": {
+        "doc": "在培养仓图标附近区域（roi 基于 GrowthChamberIcon 位置 + offset）匹配并点击助力按钮",
         "recognition": {
             "type": "TemplateMatch",
             "param": {
                 "template": "VisitFriends/ProductionAssist.png",
                 "threshold": 0.8,
-                "order_by": "Horizontal",
-                "index": -1
+                "roi": "VisitorTerminalGrowthChamberIcon",
+                "roi_offset": [
+                    -12,
+                    -12,
+                    176,
+                    136
+                ]
             }
         },
         "action": {
@@ -362,6 +520,7 @@
         ]
     },
     "VisitorTerminalAssist": {
+        "doc": "访客终端能助力的就助力",
         "recognition": "TemplateMatch",
         "template": [
             "VisitFriends/ProductionAssist.png",
@@ -378,6 +537,7 @@
         ]
     },
     "VisitorTerminalCloseSeedDialog": {
+        "doc": "确认助力培养仓后弹出的获得种子二级页面",
         "recognition": {
             "type": "TemplateMatch",
             "param": {
@@ -394,6 +554,7 @@
         ]
     },
     "ExitTerminalAssist": {
+        "doc": "按 Esc 从访客终端退出",
         "action": {
             "type": "ClickKey",
             "param": {
@@ -405,10 +566,17 @@
         ]
     },
     "ExitAssist": {
+        "doc": "助力完毕，离开好友的船",
         "recognition": {
             "type": "TemplateMatch",
             "param": {
                 "template": "VisitFriends/Leave.png",
+                "roi": [
+                    0,
+                    0,
+                    65,
+                    62
+                ],
                 "threshold": 0.8
             }
         },
@@ -423,14 +591,15 @@
         ]
     },
     "ClueExchangeOCR": {
+        "doc": "线索交流 - 剩余次数大于0",
         "recognition": {
             "type": "OCR",
             "param": {
                 "roi": [
                     1167,
-                    71,
-                    10,
-                    16
+                    72,
+                    12,
+                    17
                 ],
                 "expected": [
                     "[1-5]"
@@ -455,10 +624,17 @@
         ]
     },
     "ClueExchangeCheck": {
+        "doc": "是否有可以线索交流的好友，如果有就点进去",
         "recognition": {
             "type": "TemplateMatch",
             "param": {
                 "template": "VisitFriends/ClueExchangeAvailable.png",
+                "roi": [
+                    1124,
+                    95,
+                    105,
+                    539
+                ],
                 "threshold": 0.95
             }
         },
@@ -478,6 +654,7 @@
         ]
     },
     "ClueExchangeSwipe": {
+        "doc": "为了找可以线索交流的好友而下滑",
         "recognition": "DirectHit",
         "max_hit": 12,
         "action": {
@@ -499,10 +676,17 @@
         ]
     },
     "ConfirmVisitToExchange": {
+        "doc": "为了线索交流确认访问好友二级菜单",
         "recognition": {
             "type": "TemplateMatch",
             "param": {
                 "template": "VisitFriends/Confirm.png",
+                "roi": [
+                    778,
+                    425,
+                    111,
+                    83
+                ],
                 "threshold": 0.8
             }
         },
@@ -515,10 +699,17 @@
         ]
     },
     "OnExchange": {
+        "doc": "到达能线索交流的好友船上",
         "recognition": {
             "type": "TemplateMatch",
             "param": {
                 "template": "VisitFriends/ArriveShip.png",
+                "roi": [
+                    1194,
+                    0,
+                    86,
+                    69
+                ],
                 "threshold": 0.8
             }
         },
@@ -533,10 +724,17 @@
         ]
     },
     "WaitOpenTerminalExchange": {
+        "doc": "在能线索交流的好友船上的访客终端界面",
         "recognition": {
             "type": "TemplateMatch",
             "param": {
                 "template": "VisitFriends/TerminalIsOpen.png",
+                "roi": [
+                    116,
+                    218,
+                    191,
+                    294
+                ],
                 "threshold": 0.8
             }
         },
@@ -546,6 +744,7 @@
         ]
     },
     "VisitorTerminalExchange": {
+        "doc": "访客终端能助力的就助力",
         "recognition": "TemplateMatch",
         "template": [
             "VisitFriends/ProductionAssist.png",
@@ -562,6 +761,7 @@
         ]
     },
     "ExitTerminalExchange": {
+        "doc": "线索交换完毕，按 Esc 返回",
         "action": {
             "type": "ClickKey",
             "param": {
@@ -573,10 +773,17 @@
         ]
     },
     "ExitFriendHome": {
+        "doc": "按 Esc 离开好友的船",
         "recognition": {
             "type": "TemplateMatch",
             "param": {
                 "template": "VisitFriends/Leave.png",
+                "roi": [
+                    0,
+                    0,
+                    65,
+                    62
+                ],
                 "threshold": 0.8
             }
         },
@@ -591,6 +798,7 @@
         ]
     },
     "VisitEnd": {
+        "doc": "访问结束",
         "action": {
             "type": "DoNothing",
             "param": {}
@@ -601,10 +809,17 @@
         ]
     },
     "ClickVisitEnd": {
+        "doc": "点击右下角结束拜访",
         "recognition": {
             "type": "TemplateMatch",
             "param": {
                 "template": "VisitFriends/EndVisit.png",
+                "roi": [
+                    1194,
+                    638,
+                    58,
+                    50
+                ],
                 "threshold": 0.95
             }
         },
@@ -617,10 +832,17 @@
         ]
     },
     "ConfirmVisitEnd": {
+        "doc": "确认结束拜访",
         "recognition": {
             "type": "TemplateMatch",
             "param": {
                 "template": "VisitFriends/Confirm.png",
+                "roi": [
+                    805,
+                    433,
+                    59,
+                    65
+                ],
                 "threshold": 0.8
             }
         },
@@ -633,16 +855,17 @@
         ]
     },
     "ReturnToMenu": {
+        "doc": "关闭好友列表，回到最初级 Esc 界面",
         "recognition": {
             "type": "TemplateMatch",
             "param": {
                 "template": "VisitFriends/CloseFriendList.png",
                 "threshold": 0.9,
                 "roi": [
-                    1213,
-                    7,
-                    30,
-                    30
+                    1208,
+                    0,
+                    51,
+                    52
                 ]
             }
         },
@@ -655,10 +878,17 @@
         ]
     },
     "ExitMenu": {
+        "doc": "退出最初级 Esc 界面",
         "recognition": {
             "type": "TemplateMatch",
             "param": {
                 "template": "VisitFriends/FriendList.png",
+                "roi": [
+                    898,
+                    62,
+                    382,
+                    612
+                ],
                 "threshold": 0.8
             }
         },
@@ -668,14 +898,14 @@
                 "key": 27
             }
         },
+        "post_delay": 400,
         "next": [
             "VisitComplete"
         ]
     },
     "VisitComplete": {
-        "action": {
-            "type": "DoNothing",
-            "param": {}
-        }
+        "doc": "结束节点,无需延迟",
+        "pre_delay": 0,
+        "post_delay": 0
     }
 }
